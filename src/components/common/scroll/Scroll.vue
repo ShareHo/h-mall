@@ -22,11 +22,11 @@ export default {
   props: {
     probeType: {
       type: Number,
-      default: 0
+      default: 0 // 0不监听滚动、1非实时监听、2实时监听(不包括惯性动画)、3包括惯性动画
     },
     pullUpLoad: {
       type: [Object, Boolean],
-      default: false
+      default: false // 监听上拉事件
     }
   },
   mounted() {
@@ -37,16 +37,20 @@ export default {
         probeType: this.probeType,
         pullUpLoad: this.pullUpLoad,
         click: true,
-        tap: "tap"
+        // tap: "tap"
       })
 
-      this.scroll.on("scroll", position => {
-        this.$emit('scroll',position)
-      })
-
-      this.scroll.on("pullingUp", () => {
-        this.$emit('pullingUp')
-      })
+      if(this.probeType !== 1){
+        this.scroll.on("scroll", position => {
+          this.$emit('scroll',position)
+        })
+      }
+      
+      if(this.pullUpLoad){
+        this.scroll.on("pullingUp", () => {
+          this.$emit('pullingUp')
+        })
+      }
     })
   },
   // 数据发生改变时引起重新渲染

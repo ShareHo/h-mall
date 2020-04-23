@@ -20,6 +20,10 @@ import GoodsListItem from 'components/content/goods/GoodsListItem'
           return []
         }
       }
+    },
+    mounted() {
+      setTimeout(()=>{this.$bus.$emit('test')},1000)
+      
     }
   }
 </script>

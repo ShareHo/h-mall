@@ -2,7 +2,7 @@
   <swiper class="swiper" :options="swiperOption">
     <swiper-slide v-for="item in banner">
       <a :href="item.link">
-        <img :src="item.image" style="width:100%;">
+        <img :src="item.image" style="width:100%;" @load="loaded" />
       </a>
     </swiper-slide>
     <div class="swiper-pagination" slot="pagination"></div>
@@ -39,6 +39,15 @@ export default {
           el: '.swiper-pagination',
           clickable: true
         }
+      },
+      isLoad: false
+    }
+  },
+  methods: {
+    loaded() {
+      if(!this.isLoad){
+        this.$emit('loaded')
+        this.isLoad = true
       }
     }
   }

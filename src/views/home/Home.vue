@@ -3,20 +3,29 @@
     <nav-bar class="home-nav">
       <template v-slot:center>购物街</template>
     </nav-bar>
+    <tab-control 
+      class="tab-control"
+      v-show="isTabfixed"
+      :titles="['流行','新款','精选']" 
+      @tabClick="tabClick"
+      ref="tabControl1" />
 
     <scroll class="content" 
-        ref="scroll" 
-        :probe-type="3" 
-        @scroll="contentScroll" 
-        :pull-up-load="true" 
-        @pullingUp="pullingUp">
-      <home-swiper :banner="banner" ref="haha"/>
+      ref="scroll" 
+      :probe-type="3" 
+      @scroll="contentScroll" 
+      :pull-up-load="true" 
+      @pullingUp="loadMore">
+      <home-swiper @loaded.once="getTabControlOffsetTop" :banner="banner"/>
 
-      <recommend-view :recommend="recommend"/>
+      <recommend-view @loaded.once="getTabControlOffsetTop" :recommend="recommend"/>
 
-      <feature-view />
+      <feature-view @loaded.once="getTabControlOffsetTop" />
 
-      <tab-control class="tab-control" :titles="['流行','新款','精选']" @tabClick="tabClick" />
+      <tab-control
+        :titles="['流行','新款','精选']" 
+        @tabClick="tabClick" 
+        ref="tabControl2" />
       
       <goods-list :goods="showGoods"/>
     </scroll>
@@ -60,13 +69,33 @@ import { getHomeMultiData, getHomeGoods } from 'network/home'
           "sell": {page: 0, list: []}
         },
         currentType: 'pop',
-        isShowBackTop: false
+        isShowBackTop: false,
+        tabOffsetTop: 0,
+        isTabfixed: false,
+        saveY: 0
       }
     },
     computed: {
       showGoods() {
         return this.goods[this.currentType].list
       }
+    },
+    created() {
+      // 获取首页推荐、轮播图数据
+      this.getHomeMultiData()
+      // 获取商品数据
+      this.getHomeGoods('pop')
+      this.getHomeGoods('new')
+      this.getHomeGoods('sell')
+    },
+    activated() {
+      this.$nextTick(() => {
+        this.$refs.scroll.scroll.refresh()
+        this.$refs.scroll.scrollTo(0, this.saveY, 0)
+      })
+    },
+    deactivated() {
+      this.saveY = this.$refs.scroll.scroll.y
     },
     methods: {
       /**
@@ -96,6 +125,8 @@ import { getHomeMultiData, getHomeGoods } from 'network/home'
         // 切换数据类别
         tabClick(index) {
           this.currentType = Object.keys(this.goods)[index]
+          this.$refs.tabControl1.currentIndex = index
+          this.$refs.tabControl2.currentIndex = index
         },
         // 回到顶部
         backClick() {
@@ -104,21 +135,19 @@ import { getHomeMultiData, getHomeGoods } from 'network/home'
         // 监听内容滚动
         contentScroll(position) {
           this.isShowBackTop = -(position.y) > 800
+          
+          this.isTabfixed = -(position.y) > this.tabOffsetTop
         },
         // 监听上拉操作
-        pullingUp() {
+        loadMore() {
           this.getHomeGoods(this.currentType).then(() => {
             this.$refs.scroll.finishPullUp()
           })
+        },
+        // 获取tabControl高度位移
+        getTabControlOffsetTop() {
+          this.tabOffsetTop = this.$refs.tabControl2.$el.offsetTop
         }
-    },
-    created() {
-      // 获取首页推荐、轮播图数据
-      this.getHomeMultiData()
-      // 获取商品数据
-      this.getHomeGoods('pop')
-      this.getHomeGoods('new')
-      this.getHomeGoods('sell')
     }
   }
 </script>
@@ -141,16 +170,15 @@ import { getHomeMultiData, getHomeGoods } from 'network/home'
     background-color: var(--color-tint);
     color: #fff;
 
-    position: fixed;
+    /* position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    z-index: 99;
+    z-index: 99; */
   }
 
   .tab-control{
-    position: sticky;
-    top: 44px;
+    position: relative;
     z-index: 99;
   }
 </style>
